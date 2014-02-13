@@ -1,0 +1,47 @@
+#!/bin/sh
+
+# git check
+#
+# Updates your repository and shows if you're ahead
+# or have uncommited changes. 
+#
+# - Put this in "/usr/local/bin/git-check"
+#   and make it executable: sudo chmod ugo+x /usr/local/bin/git-check
+# - Run from your project directory containing all git repos: `git check`
+# - Watch it nagging you
+#
+# Requires: git-up sed awk
+
+GIT_UP_TEMP=`tempfile`
+GIT_UP_ERR=`tempfile`
+
+for D in `ls -1`; do # each file/dir
+  if [ -d ${D}/.git ]; then # it's a git directory: git up there
+    cd ${D}
+    
+    # update current project but redirect errors
+    /usr/local/bin/git-up 2>${GIT_UP_ERR} | \
+    # don't show clean branches
+    grep -v 'up to date' | \
+    # don't show unstashing
+    grep -v 'unstashing' | \
+    # don't show remotes
+    grep -vi '^fetching' | \
+    # replace 'stashing' with 'has'
+    sed 's/stashing/has/' | \
+    # place tab before everything
+    awk '{ print "\t" $0 }' > ${GIT_UP_TEMP}
+
+	if [ -s ${GIT_UP_ERR} ]; then # has some errors
+        echo "Project ${D}:";
+        echo "\t\033[31mHAS ERRORS!\033[m"
+    elif [ -s ${GIT_UP_TEMP} ]; then # got things to say
+        echo "Project ${D}:";
+        cat ${GIT_UP_TEMP};
+    fi;
+    
+    cd ..
+  fi;
+done;
+
+# read -p "Press any key to close ..." -n1 -s
