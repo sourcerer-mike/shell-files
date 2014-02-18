@@ -1,5 +1,0 @@
-#!/bin/bash
-
-read -p "User: " user
-read -s -p "Pass: " pass
-ab -A "${user}":"${pass}" $@
