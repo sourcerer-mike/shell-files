@@ -1,0 +1,11 @@
+#!/bin/bash
+#
+# abc - Apache Benchmark Credentials
+#
+# ABC is `ab` but without having the credentials in your history.
+# The parameters and usage is as known from `ab` but please avoid using the "-A" option.
+#
+
+read -p "User: " user
+read -s -p "Pass: " pass
+ab -A "${user}":"${pass}" $@
