@@ -1,0 +1,13 @@
+#!/bin/sh
+
+theUser=$(ps aux | grep `which apache2` | grep -v root | grep -v `whoami` | awk '{print $1}' | uniq | head -n1)
+theGroup=$(groups www-data | awk '{print $3}')
+
+if [ "${1}" ]; then
+    chown -R ${1} .
+else
+    echo You can set the user and group too:   `basename ${0}` `whoami`:${theGroup}
+fi;
+
+find . -type d -exec chmod 2775 {} \;
+find . -type f -exec chmod 663 {} \;
