@@ -203,3 +203,8 @@ setprompt
 if [ -f ~/.aliases ]; then
     . ~/.aliases
 fi
+
+# parse local zshrc
+if [ -f ~/.zshrc_local ]; then
+    . ~/.zshrc_local
+fi
