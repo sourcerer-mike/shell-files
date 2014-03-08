@@ -1,3 +1,9 @@
+[user]
+	name = Mike Pretzlaw
+	email = pretzlaw@gmail.com
+[core]
+	excludesfile = /home/mike/.gitignore_global
+
 [alias]
 	# View the SHA, description, and history graph of the latest 20 commits
 	l = log --pretty=oneline -n 20 --graph
@@ -28,6 +34,8 @@
 	undocommit = reset --soft HEAD^
 	# Search for a file
 	search = log --stat --all --grep
+        # Restore something which is deleted but somewhere in VCS
+        restore = checkout $(git rev-list -n 1 HEAD -- "$1")^ -- "$1"
 
 [apply]
 	# Detect whitespace errors when applying a patch
