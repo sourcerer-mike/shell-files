@@ -1,0 +1,79 @@
+#!/usr/bin/php
+<?php
+
+$thresholdLevel = 8;
+
+$day = 3;
+$month = "Mar";
+
+$file = '/var/www/access.log';
+$baseDir = dirname($file);
+$baseUrl = 'localhost.magento';
+
+$fh = fopen($file, 'r');
+
+$baseTime = new DateTime('now');
+$baseTime->setTime(8, 0);
+
+$endTime = new DateTime('now');
+
+$dateInterval = date_interval_create_from_date_string('15 minutes');
+
+/** @var DateInterval $dateDiff */
+$dateDiff = date_diff($baseTime, $endTime);
+
+while ($baseTime && $endTime->diff($baseTime)->invert)
+{
+    echo $baseTime->format('Y-m-d H:i') . PHP_EOL;
+    $baseTime = $baseTime->add($dateInterval);
+
+    do {
+        $row = fgetcsv($fh, null, ' ', '"');
+        list($ip, $a, $b, $date, $timeZone, $request, $responseCode, $byte, $c, $browser) = $row;
+        $currentTime = DateTime::createFromFormat('[d/M/Y:H:i:sP]', $date . $timeZone);
+    } while (($currentTime == false || $baseTime->diff($currentTime)->days) && !feof($fh));
+
+    while ($currentTime && $baseTime->diff($currentTime)->invert && $row = fgetcsv($fh, null, ' ', '"'))
+    {
+        $requestSet = explode(' ', $request);
+
+        $dir = ltrim($requestSet[1], '/');
+        $project = strtok($dir, '/');
+
+        if ($project && is_dir($baseDir . '/' . $project))
+        {
+            if (!isset($currentSet[$project]['last']) || $currentTime->diff($currentSet[$project]['last'])->i >= 1)
+            {
+                $currentSet[$project]['last'] = clone $currentTime;
+                $currentSet[$project]['count']++;
+            }
+        }
+
+        do {
+            $row = fgetcsv($fh, null, ' ', '"');
+            list($ip, $a, $b, $date, $timeZone, $request, $responseCode, $byte, $c, $browser) = $row;
+            $currentTime = DateTime::createFromFormat('[d/M/Y:H:i:sP]', $date . $timeZone);
+        } while ($currentTime == false && !feof($fh));
+
+    }
+
+    foreach ($currentSet as $project => $data)
+    {
+        printf('    - %s (%d)' . PHP_EOL, $project, $data['count']);
+    }
+
+    $currentSet = array();
+
+}
+
+//while ($row = fgetcsv($fh, null, ' ', '"'))
+//{
+//    list($ip, $a, $b, $date, $timeZone, $request, $responseCode, $byte, $c, $browser) = $row;
+//
+//    $currentDate = DateTime::createFromFormat('[d/M/Y:H:i:sP]', $date . $timeZone);
+//
+//    if ($currentDate)
+//
+//    exit;
+//}
+
