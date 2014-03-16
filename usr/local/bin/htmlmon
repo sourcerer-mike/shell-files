@@ -1,0 +1,132 @@
+#!/usr/bin/php
+<?php
+
+$cmd = $argv[1];
+
+$appPath = get_path($_SERVER['HOME'] . '/.htmlmon');
+$jsonConfigFile = $appPath . 'monitor.json';
+
+function get_path($path)
+{
+    if (!is_dir($path))
+    {
+        mkdir($path, 0777, true);
+    }
+
+    return rtrim(realpath($path), '/') . '/';
+}
+
+function write_config()
+{
+    global $config, $jsonConfigFile;
+
+    file_put_contents($jsonConfigFile, json_encode($config));
+}
+
+function prepare()
+{
+    global $jsonConfigFile;
+
+    if (!file_exists($jsonConfigFile))
+    {
+        $config = array();
+        write_config();
+    }
+}
+
+prepare();
+
+$config = json_decode(file_get_contents($jsonConfigFile));
+switch ($argv[1])
+{
+    case 'add':
+        $config[] = array(
+            'url'   => $argv[2],
+            'xpath' => array(
+                $argv[3],
+            )
+        );
+        write_config();
+        exit ('Added ' . $argv[2]);
+    case 'list':
+        foreach ($config as $pageNode)
+        {
+            echo $pageNode->url . ':' . PHP_EOL;
+            foreach ($pageNode->xpath as $xpath)
+            {
+                echo '    - ' . $xpath . PHP_EOL;
+            }
+        }
+        echo PHP_EOL;
+        exit;
+    default:
+}
+
+foreach ($config as $pageNode)
+{
+    $what = $pageNode->url;
+
+    foreach ($pageNode->xpath as $xmlQuery)
+    {
+
+        $cachePagePath        = $_SERVER['HOME'] . '/.htmlmon/cache/page/';
+        $cachePageFilePath    = $cachePagePath . md5($what);
+        $cachePageXmlPath     = $_SERVER['HOME'] . '/.htmlmon/cache/page/xml/' . md5($what) . '/';
+        $cachePageXmlFilePath = $cachePageXmlPath . md5($xmlQuery);
+
+        if (!is_dir($cachePagePath))
+        {
+            mkdir($cachePagePath, 0777, true);
+        }
+
+        if (!is_dir($cachePageXmlPath))
+        {
+            mkdir($cachePageXmlPath, 0777, true);
+        }
+
+
+        $maxAge = 86400; // 1 day
+
+        if (!file_exists($cachePageFilePath) || filemtime($cachePageFilePath) < time() - $maxAge)
+        {
+            $ch = curl_init($what);
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_HEADER, false);
+
+            file_put_contents($cachePageFilePath, curl_exec($ch));
+        }
+
+        $dom = new DOMDocument();
+        @$dom->loadHTMLFile($cachePageFilePath);
+
+        $xpath = new DOMXPath($dom);
+        $query = $xpath->query($xmlQuery);
+
+        if (file_exists($cachePageXmlFilePath))
+        {
+            $lastHtml = file_get_contents($cachePageXmlFilePath);
+        }
+
+        $saveHTML = $dom->saveHTML($query->item(0));
+        file_put_contents($cachePageXmlFilePath, $saveHTML);
+
+        $query->item(0)->textContent = '';
+
+        if (!$lastHtml)
+        {
+            exit('Indexed page for the first time.');
+        }
+
+        if ($saveHTML !== $lastHtml)
+        {
+            echo $what . " changed:" . PHP_EOL;
+            echo $saveHTML;
+            echo PHP_EOL;
+            echo PHP_EOL;
+        }
+    }
+}
+
+
+?>
