@@ -6,17 +6,26 @@ $thresholdLevel = 8;
 $day = 3;
 $month = "Mar";
 
-$file = '/var/www/access.log';
+$file = '/home/mike/public_html/code-x/access.log';
 $baseDir = dirname($file);
 $baseUrl = 'localhost.magento';
 
 $fh = fopen($file, 'r');
 
-$baseTime = new DateTime('now');
+$start = $argv[1];
+if (!$start)
+{
+    $start = 'now';
+}
+
+$baseTime = new DateTime($start);
+$baseTime->setTime(6, 0, 0);
 $baseTime->setTime(8, 0);
 
-$endTime = new DateTime('now');
+$endTime = clone $baseTime;
+$endTime->setTime(19, 0, 0);
 
+echo "Within 15 Minutes interval:" . PHP_EOL . PHP_EOL;
 $dateInterval = date_interval_create_from_date_string('15 minutes');
 
 /** @var DateInterval $dateDiff */
@@ -24,8 +33,10 @@ $dateDiff = date_diff($baseTime, $endTime);
 
 while ($baseTime && $endTime->diff($baseTime)->invert)
 {
-    echo $baseTime->format('Y-m-d H:i') . PHP_EOL;
-    $baseTime = $baseTime->add($dateInterval);
+    $nextTime = clone $baseTime;
+    $nextTime->add($dateInterval);
+    $opener   = sprintf('%s - %s', $baseTime->format('Y-m-d H:i'), $nextTime->format('H:i')) . PHP_EOL;
+    $baseTime = $nextTime;
 
     do {
         $row = fgetcsv($fh, null, ' ', '"');
@@ -57,23 +68,17 @@ while ($baseTime && $endTime->diff($baseTime)->invert)
 
     }
 
-    foreach ($currentSet as $project => $data)
+    if (count($currentSet) > 0)
     {
-        printf('    - %s (%d)' . PHP_EOL, $project, $data['count']);
+        echo $opener;
+
+        foreach ($currentSet as $project => $data)
+        {
+            printf('    - %s (%d)' . PHP_EOL, $project, $data['count']);
+        }
+
     }
 
     $currentSet = array();
 
 }
-
-//while ($row = fgetcsv($fh, null, ' ', '"'))
-//{
-//    list($ip, $a, $b, $date, $timeZone, $request, $responseCode, $byte, $c, $browser) = $row;
-//
-//    $currentDate = DateTime::createFromFormat('[d/M/Y:H:i:sP]', $date . $timeZone);
-//
-//    if ($currentDate)
-//
-//    exit;
-//}
-
