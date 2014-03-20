@@ -5,10 +5,30 @@
 	excludesfile = /home/mike/.gitignore_global
 
 [alias]
+        # Find all commit starting with the given string
+        abbr = "!sh -c 'git rev-list --all | grep ^$1 | while read commit; do git --no-pager log -n1 --pretty=format:\"%H %ci %an %s%n\" $commit; done' -"
+        # Add unmerged files again
+        add-unmerged = "!f() { git diff --name-status --diff-filter=U | cut -f2 ; }; git add `f`"
+        # Assume a file has no changes
+        assume = update-index --assume-unchanged
+        # Show all assumed files
+        assumed = "!git ls-files -v | grep ^h | cut -c 3-"
+        # Get the empty tree hash to generate diffs and patches against
+        empty-tree-sha1 = hash-object -t tree /dev/null
+        # See the differences since they two branches went different ways
+        forkdiff = !bash -c 'git diff $(git merge-base "$1" "$2") "$2" "${@: 3}" ' -
 	# View the SHA, description, and history graph of the latest 20 commits
 	l = log --pretty=oneline -n 20 --graph
+        # View the SHA
+        lg = log --color --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --no-merges
+        # List all files ever existed
+        ls = !"_() { git log --pretty=format: --name-status $@ | cut -f2- | sort -u; }; _"
+        # Show log with their files
+        ll = log --pretty=format:"%C(yellow)%h%Cred%d\\ %Creset%s%Cblue\\ [%cn]" --decorate --numstat
 	# View the current working tree status using the short format
 	s = status -s
+        # Show the files only of the given commit
+        show-files = show --pretty="format:" --name-only
 	# Show the diff between the latest commit and the current state
 	d = !"git diff-index --quiet HEAD -- || clear; git diff --patch-with-stat"
 	# `git di $number` shows the diff between the state `$number` revisions ago and the current state
@@ -19,6 +39,12 @@
 	c = clone --recursive
 	# Commit all changes
 	ca = !git add -A && git commit -av
+        # List all commiters in the current branch
+        commiters = !"_() { git log --pretty=format:%an $@ | sort -u; }; _"
+        # Edit all unmerged files at once in vim
+        edit-unmerged = "!f() { git diff --name-status --diff-filter=U | cut -f2 ; }; vim `f`"
+        # Changes between two commit-informations
+        intercommit = !sh -c 'git show "$1" > .git/commit1 && git show "$2" > .git/commit2 && interdiff .git/commit[12] | less -FRS' -
 	# Switch to a branch, creating it if necessary
 	go = checkout -B
 	# Show verbose output about tags, branches or remotes
@@ -27,6 +53,10 @@
 	remotes = remote -v
 	# Credit an author on the latest commit
 	credit = "!f() { git commit --amend --author \"$1 <$2>\" -C HEAD; }; f"
+        # See what has been created by the last command (after git pull)
+        new = !sh -c 'git log $1@{1}..$1@{0} "$@"'
+        # Checkout and in case of conflict accept ours        
+	ours = "!f() { git checkout --ours $@ && git add $@; }; f"
 	# Interactive rebase with the given number of latest commits
 	reb = "!r() { git rebase -i HEAD~$1; }; r"
 	# Undo things
@@ -34,12 +64,22 @@
 	undocommit = reset --soft HEAD^
 	# Search for a file
 	search = log --stat --all --grep
+        # Serve all files here
+        serve = daemon --reuseaddr --verbose  --base-path=. --export-all ./.git
+        # Checkout and in case of conflict accept theirs
+        theirs = "!f() { git co --theirs $@ && git add $@; }; f"
         # Restore something which is deleted but somewhere in VCS
         restore = checkout $(git rev-list -n 1 HEAD -- "$1")^ -- "$1"
-
+        # Unassume that a file has changes
+        unassume = update-index --no-assume-unchanged
+        # Information about an author by giving it's name or email
+        whois = "!sh -c 'git log -i -1 --pretty=\"format:%an <%ae>\n\" --author=\"$1\"' -"
+        # Information about a commit
+        whatis = show -s --pretty='tformat:%h (%s, %ad)' --date=short
+	initempty = "!f(){ git init \"$@\" && git commit -m \"(initial empty commit)\" --allow-empty;};f"
 [apply]
 	# Detect whitespace errors when applying a patch
-	whitespace = fix
+	whitespace = nowarn
 
 [core]
 	# Use custom `.gitignore` and `.gitattributes`
