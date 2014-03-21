@@ -1,0 +1,22 @@
+#!/bin/bash
+
+if [[ $EUID -ne 0 ]]; then
+  echo "You must be a root user" 2>&1
+  exit 1
+fi;
+
+mysql --defaults-extra-file=/etc/mysql/debian.cnf <<SQL
+SET GLOBAL log_output = "FILE";
+SET GLOBAL general_log_file = "/tmp/sqlLog.log";
+SET GLOBAL general_log = 'ON';
+SQL
+
+echo "Recording... Hit enter to stop it...";
+read -s
+
+mv /tmp/sqlLog.log ./mysqlrec.log
+chmod ugo+rw ./mysqlrec.log
+cat ./mysqlrec.log
+
+echo
+echo REMEMBER TO DELETE mysqlrec.log !!
