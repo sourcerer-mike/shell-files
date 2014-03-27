@@ -18,12 +18,24 @@ if (!$start)
     $start = 'now';
 }
 
+$startTime = $argv[2];
+if (!$startTime)
+{
+    $startTime = '7';
+}
+
+$endTime = $argv[3];
+if (!$endTime)
+{
+    $endTime = '19';
+}
+
 $baseTime = new DateTime($start);
 $baseTime->setTime(6, 0, 0);
-$baseTime->setTime(8, 0);
+$baseTime->setTime($startTime, 0);
 
 $endTime = clone $baseTime;
-$endTime->setTime(19, 0, 0);
+$endTime->setTime($endTime, 0);
 
 echo "Within 15 Minutes interval:" . PHP_EOL . PHP_EOL;
 $dateInterval = date_interval_create_from_date_string('15 minutes');
