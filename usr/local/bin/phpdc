@@ -1,0 +1,75 @@
+#!/usr/bin/php
+<?php
+
+class Command
+{
+    protected $_optionSet;
+
+    function getOption($key = null)
+    {
+        if (!$this->_optionSet)
+        {
+            $optionConfig = array(
+                "d::" => "directory::", // Optional dirname
+                'filePattern::'
+            );
+
+            $options = getopt(
+                implode('', array_filter(array_keys($optionConfig), 'is_string')),
+                array_values($optionConfig)
+            );
+
+            foreach ($optionConfig as $short => $long)
+            {
+                $short = trim($short, ':');
+                $long = trim($long, ':');
+
+                if (isset($options[$short]))
+                {
+                    $options[$long] = $short;
+                }
+
+                if (isset($options[$long]))
+                {
+                    $options[$short] = $long;
+                }
+            }
+        }
+
+        if (null === $key)
+        {
+            return $this->_optionSet;
+        }
+
+        if (!isset($this->_optionSet[$key]))
+        {
+            return null;
+        }
+
+        return $this->_optionSet[$key];
+    }
+
+    public function run()
+    {
+        if (null === $this->getOption('directory'))
+        {
+            $this->setOption('directory', getcwd());
+        }
+
+        $Directory = new RecursiveDirectoryIterator($this->getOption('directory'));
+        $Iterator = new RecursiveIteratorIterator($Directory);
+        $Regex = new RegexIterator($Iterator, '/^.+\.php$/i', RecursiveRegexIterator::GET_MATCH);
+
+        sprintf('Found %d files to parse ...', count($Regex));
+
+    }
+
+    public function setOption($key, $value)
+    {
+        $this->_optionSet[$key] = $value;
+
+        return $this;
+    }
+}
+
+(new Command())->run();
