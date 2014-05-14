@@ -17,7 +17,6 @@ vendor
 *.sass-cache
 *.swo
 *.swp
-*.vi
 *~
 
 # Generated files (that can be reconstructed)
@@ -75,6 +74,12 @@ Desktop.ini
 #
 # Editor or IDE files and folders
 #
+
+# vi
+*.vi
+
+# joe
+DEADJOE
 
 # Dreamweaver
 _notes
