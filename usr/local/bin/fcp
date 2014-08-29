@@ -1,0 +1,10 @@
+#!/bin/sh
+
+if [[ ! `which wget` ]]; then
+  echo "You need to install wget"
+  exit(1);
+fi
+
+echo -n "Password: "
+read -s P
+wget -r $* --password $P
