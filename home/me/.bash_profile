@@ -42,8 +42,12 @@ which grunt > /dev/null && eval "$(grunt --completion=bash)"
 [ -f /etc/bash_completion ] && source /etc/bash_completion
 
 function cd() {
-	builtin cd "$*"
-	ls
+        if [ -z $@ ]; then
+          cd ~
+        else
+          builtin cd "$*"
+          ls
+        fi
 }
 
 
