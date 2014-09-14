@@ -42,11 +42,25 @@ which grunt > /dev/null && eval "$(grunt --completion=bash)"
 [ -f /etc/bash_completion ] && source /etc/bash_completion
 
 function cd() {
-        if [ -z $@ ]; then
-          cd ~
+        if [ -z $@ ]; then # no dir given: go to home
+          cd $HOME
+
         else
-          builtin cd "$*"
-          ls
+          DIRNAME=$(readlink -f `dirname $@`)
+          CURDIR=`pwd`
+
+          
+          if [ -f $@ ] && [ "$DIRNAME" != "$CURDIR" ]; then
+            # existing file and in different dir: switch to dir
+            cd $DIRNAME
+          else
+            # it is a directory: switch to dir
+            builtin cd $@
+            if [ $? -eq 0 ]; then
+              ls
+            fi
+          fi
+
         fi
 }
 
