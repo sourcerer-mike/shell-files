@@ -18,7 +18,7 @@
         # See the differences since they two branches went different ways
         forkdiff = !bash -c 'git diff $(git merge-base "$1" "$2") "$2" "${@: 3}" ' -
 	# View the SHA, description, and history graph of the latest 20 commits
-	l = log --pretty=oneline -n 20 --graph
+	l = log --pretty=oneline -n 20 --graph --abbrev-commit
         # View the SHA
         lg = log --color --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --no-merges
         # List all files ever existed
@@ -87,7 +87,7 @@
 	attributesfile = ~/.gitattributes
 	# Treat spaces before tabs, lines that are indented with 8 or more spaces, and all kinds of trailing whitespace as an error
 	whitespace = space-before-tab,indent-with-non-tab,trailing-space
-	autocrlf = input
+	autocrlf = false
 
 [color]
 	# Use colors in Git commands that are capable of colored output when outputting to the terminal
